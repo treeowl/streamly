@@ -40,7 +40,7 @@ main :: IO ()
 main =
   defaultMain
     [ bgroup "serially"
-      [ {-bgroup "generation"
+      [ bgroup "generation"
         [ -- Most basic, barely stream continuations running
           benchSrcIO serially "unfoldr" Ops.sourceUnfoldr
         , benchSrcIO serially "unfoldrM" Ops.sourceUnfoldrM

@@ -169,6 +169,7 @@ cons x (Stream step state) = Stream step1 Nothing
         r <- step (rstState gst) st
         case r of
             Yield a s -> return $ Yield a (Just s)
+            Skip s -> return $ Skip (Just s)
             Stop -> return Stop
 
 -------------------------------------------------------------------------------
@@ -182,9 +183,10 @@ uncons (Stream step state) = go state
   where
     go st = do
         r <- step defState st
-        return $ case r of
-            Yield x s -> Just (x, Stream step s)
-            Stop      -> Nothing
+        case r of
+            Yield x s -> return $ Just (x, Stream step s)
+            Skip s    -> go s
+            Stop      -> return Nothing
 
 ------------------------------------------------------------------------------
 -- Generation by unfold
@@ -285,6 +287,7 @@ foldrM f z (Stream step state) = go SPEC state
           r <- step defState st
           case r of
             Yield x s -> go SPEC s >>= f x
+            Skip s    -> go SPEC s
             Stop      -> return z
 
 {-# INLINE_NORMAL foldr #-}
@@ -301,6 +304,7 @@ foldlM' fstep begin (Stream step state) = go SPEC begin state
             Yield x s -> do
                 acc' <- fstep acc x
                 go SPEC acc' s
+            Skip s -> go SPEC acc s
             Stop -> return acc
 
 {-# INLINE foldl' #-}
@@ -331,6 +335,7 @@ null (Stream step state) = go state
         r <- step defState st
         case r of
             Yield _ _ -> return False
+            Skip s -> go s
             Stop -> return True
 
 -- XXX SPEC?
@@ -342,6 +347,7 @@ head (Stream step state) = go state
         r <- step defState st
         case r of
             Yield x _ -> return (Just x)
+            Skip s -> go s
             Stop -> return Nothing
 
 -- Does not fuse, has the same performance as the StreamK version.
@@ -353,6 +359,7 @@ tail (Stream step state) = go state
         r <- step defState st
         case r of
             Yield _ s -> return (Just $ Stream step s)
+            Skip s -> go s
             Stop -> return Nothing
 
 -- XXX will it fuse? need custom impl?
@@ -371,6 +378,7 @@ elem e (Stream step state) = go state
                 if x == e
                 then return True
                 else go s
+            Skip s -> go s
             Stop -> return False
 
 {-# INLINE_NORMAL notElem #-}
@@ -384,6 +392,7 @@ notElem e (Stream step state) = go state
                 if x == e
                 then return False
                 else go s
+            Skip s -> go s
             Stop -> return True
 
 {-# INLINE_NORMAL all #-}
@@ -397,6 +406,7 @@ all p (Stream step state) = go state
                 if p x
                 then go s
                 else return False
+            Skip s -> go s
             Stop -> return True
 
 {-# INLINE_NORMAL any #-}
@@ -410,6 +420,7 @@ any p (Stream step state) = go state
                 if p x
                 then return True
                 else go s
+            Skip s -> go s
             Stop -> return False
 
 {-# INLINE_NORMAL maximum #-}
@@ -420,6 +431,7 @@ maximum (Stream step state) = go Nothing state
         r <- step defState st
         case r of
             Yield x s -> go (Just x) s
+            Skip s -> go Nothing s
             Stop -> return Nothing
     go (Just acc) st = do
         r <- step defState st
@@ -428,6 +440,7 @@ maximum (Stream step state) = go Nothing state
                 if acc <= x
                 then go (Just x) s
                 else go (Just acc) s
+            Skip s -> go (Just acc) s
             Stop -> return (Just acc)
 
 {-# INLINE_NORMAL minimum #-}
@@ -438,6 +451,7 @@ minimum (Stream step state) = go Nothing state
         r <- step defState st
         case r of
             Yield x s -> go (Just x) s
+            Skip s -> go Nothing s
             Stop -> return Nothing
     go (Just acc) st = do
         r <- step defState st
@@ -446,6 +460,7 @@ minimum (Stream step state) = go Nothing state
                 if acc <= x
                 then go (Just acc) s
                 else go (Just x) s
+            Skip s -> go (Just acc) s
             Stop -> return (Just acc)
 
 ------------------------------------------------------------------------------
@@ -470,10 +485,11 @@ toList = foldr (:) []
 toStreamK :: Monad m => Stream m a -> K.Stream m a
 toStreamK (Stream step state) = go state
     where
-    go st = K.Stream $ \gst stp _ yld -> do
+    go st = K.Stream $ \gst stp sng yld -> do
         r <- step gst st
         case r of
             Yield x s -> yld x (go s)
+            Skip s    -> K.unStream (go s) gst stp sng yld -- TODO: Is this correct?
             Stop      -> stp
 
 #ifndef DISABLE_FUSION
@@ -499,6 +515,7 @@ postscanlM' fstep begin (Stream step state) =
             Yield x s -> do
                 y <- fstep acc x
                 y `seq` return (Yield y (s, y))
+            Skip s -> return (Skip (s, acc))
             Stop -> return Stop
 
 {-# INLINE_LATE scanlM' #-}
@@ -625,6 +642,7 @@ mapM f (Stream step state) = Stream step' state
         r <- step (rstState gst) st
         case r of
             Yield x s -> f x >>= \a -> return $ Yield a s
+            Skip s    -> return (Skip s)
             Stop      -> return Stop
 
 {-# INLINE map #-}
@@ -657,7 +675,8 @@ zipWithM f (Stream stepa ta) (Stream stepb tb) = Stream step (ta, tb, Nothing)
     step gst (sa, sb, Nothing) = do
         r <- stepa (rstState gst) sa
         case r of
-            Yield x sa' -> step gst (sa', sb, Just x)
+            Yield x sa' -> return (Skip (sa', sb, Just x))
+            Skip sa'    -> return (Skip (sa', sb, Nothing))
             Stop        -> return Stop
 
     step gst (sa, sb, Just x) = do
@@ -666,6 +685,7 @@ zipWithM f (Stream stepa ta) (Stream stepb tb) = Stream step (ta, tb, Nothing)
             Yield y sb' -> do
                 z <- f x y
                 return $ Yield z (sa, sb', Nothing)
+            Skip sb' -> return $ Skip (sa, sb', Just x)
             Stop -> return Stop
 
 {-# RULES "zipWithM xs xs"
