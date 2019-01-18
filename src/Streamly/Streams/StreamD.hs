@@ -191,8 +191,10 @@ module Streamly.Streams.StreamD
     )
 where
 
+import Data.Functor.Identity (Identity(..))
 import Data.Maybe (fromJust, isJust)
-import GHC.Types ( SPEC(..) )
+import GHC.Base (build)
+import GHC.Types (SPEC(..))
 import Prelude
        hiding (map, mapM, mapM_, repeat, foldr, last, take, filter,
                takeWhile, drop, dropWhile, all, any, maximum, minimum, elem,
@@ -888,9 +890,25 @@ mapM_ m = runStream . mapM m
 -- Converting folds
 ------------------------------------------------------------------------------
 
-{-# INLINE toList #-}
+{-# INLINE_NORMAL toList #-}
 toList :: Monad m => Stream m a -> m [a]
 toList = foldr (:) []
+
+-- Use foldr/build fusion to fuse with list consumers
+-- This can be useful when using the IsList instance
+{-# INLINE_LATE toListFB #-}
+toListFB :: (a -> b -> b) -> b -> Stream Identity a -> b
+toListFB c n (Stream step state) = go state
+  where
+    go st = case runIdentity (step defState st) of
+             Yield x s -> x `c` go s
+             Skip s    -> go s
+             Stop      -> n
+
+{-# RULES "toList Identity" toList = toListId #-}
+{-# INLINE_EARLY toListId #-}
+toListId :: Stream Identity a -> Identity [a]
+toListId s = Identity $ build (\c n -> toListFB c n s)
 
 -- Convert a direct stream to and from CPS encoded stream
 {-# INLINE_LATE toStreamK #-}
@@ -901,7 +919,7 @@ toStreamK (Stream step state) = go state
         r <- step gst st
         case r of
             Yield x s -> yld x (go s)
-            Skip  s   -> K.foldStreamShared gst yld sng stp $ go s
+            Skip s    -> K.foldStreamShared gst yld sng stp $ go s
             Stop      -> stp
 
 #ifndef DISABLE_FUSION
