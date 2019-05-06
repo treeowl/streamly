@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Main (main) where
 
@@ -88,6 +89,7 @@ constructWithLen
     -> Property
 constructWithLen mkStream mkList op len = withMaxSuccess maxTestCount $
     monadicIO $ do
+        liftIO $ putStrLn $ "len = " ++ show len
         stream <- run $ (S.toList . op) (mkStream (fromIntegral len))
         let list = mkList (fromIntegral len)
         listEquals (==) stream list
@@ -849,13 +851,11 @@ main = hspec
     let serialOps :: IsStream t => ((SerialT IO a -> t IO a) -> Spec) -> Spec
         serialOps spec = mapOps spec $ makeOps serially
 #ifndef COVERAGE_BUILD
-            <> [("rate AvgRate 0.00000001", serially . avgRate 0.00000001)]
             <> [("maxBuffer -1", serially . maxBuffer (-1))]
 #endif
     let wSerialOps :: IsStream t => ((WSerialT IO a -> t IO a) -> Spec) -> Spec
         wSerialOps spec = mapOps spec $ makeOps wSerially
 #ifndef COVERAGE_BUILD
-            <> [("rate AvgRate 0.00000001", wSerially . avgRate 0.00000001)]
             <> [("maxBuffer (-1)", wSerially . maxBuffer (-1))]
 #endif
     let asyncOps :: IsStream t => ((AsyncT IO a -> t IO a) -> Spec) -> Spec
@@ -891,15 +891,16 @@ main = hspec
         zipAsyncOps spec = mapOps spec $ makeOps zipAsyncly
 
     describe "Construction" $ do
-        serialOps   $ prop "serially replicate" . constructWithReplicate
+--        serialOps   $ prop "serially replicate" . constructWithReplicate
 
-        serialOps   $ prop "serially replicateM" . constructWithReplicateM
-        wSerialOps  $ prop "wSerially replicateM" . constructWithReplicateM
+--        serialOps   $ prop "serially replicateM" . constructWithReplicateM
+--        wSerialOps  $ prop "wSerially replicateM" . constructWithReplicateM
         aheadOps    $ prop "aheadly replicateM" . constructWithReplicateM
-        asyncOps    $ prop "asyncly replicateM" . constructWithReplicateM
-        wAsyncOps   $ prop "wAsyncly replicateM" . constructWithReplicateM
-        parallelOps $ prop "parallely replicateM" .  constructWithReplicateM
+--        asyncOps    $ prop "asyncly replicateM" . constructWithReplicateM
+--        wAsyncOps   $ prop "wAsyncly replicateM" . constructWithReplicateM
+--        parallelOps $ prop "parallely replicateM" .  constructWithReplicateM
 
+{-
         serialOps   $ prop "serially intFromThenTo" .
                             constructWithIntFromThenTo
 #if __GLASGOW_HASKELL__ >= 806
@@ -1126,3 +1127,4 @@ main = hspec
         aheadOps     $ eliminationOpsOrdered folded "aheadly folded"
         zipSerialOps $ eliminationOpsOrdered folded "zipSerially folded"
         zipAsyncOps  $ eliminationOpsOrdered folded "zipAsyncly folded"
+        -}
