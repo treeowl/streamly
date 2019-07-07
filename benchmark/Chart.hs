@@ -22,8 +22,16 @@ import BenchShow
 -- Command line parsing
 ------------------------------------------------------------------------------
 
-data BenchType = Linear | LinearAsync | LinearRate | Nested | Base | FileIO
-    deriving Show
+data BenchType
+    = Linear
+    | LinearAsync
+    | LinearRate
+    | Nested
+    | Base
+    | FileIO
+    | ArrayOps
+    | Concurrent
+    deriving (Show)
 
 data Options = Options
     { genGraphs :: Bool
@@ -63,6 +71,8 @@ parseBench = do
         Just "nested" -> setBenchType Nested
         Just "base" -> setBenchType Base
         Just "fileio" -> setBenchType FileIO
+        Just "array" -> setBenchType ArrayOps
+        Just "concurrent" -> setBenchType Concurrent
         Just str -> do
                 liftIO $ putStrLn $ "unrecognized benchmark type " <> str
                 mzero
@@ -233,6 +243,14 @@ makeFileIOGraphs :: Config -> String -> IO ()
 makeFileIOGraphs cfg@Config{..} inputFile =
     ignoringErr $ graph inputFile "fileIO" cfg
 
+makeArrayOpsGraphs :: Config -> String -> IO ()
+makeArrayOpsGraphs cfg@Config{..} inputFile =
+    ignoringErr $ graph inputFile "array" cfg
+
+makeConcurrentGraphs :: Config -> String -> IO ()
+makeConcurrentGraphs cfg@Config{..} inputFile =
+    ignoringErr $ graph inputFile "concurrent" cfg
+
 ------------------------------------------------------------------------------
 -- Reports/Charts for base streams
 ------------------------------------------------------------------------------
@@ -334,6 +352,16 @@ main = do
                             makeFileIOGraphs
                             "charts/fileio/results.csv"
                             "charts/fileio"
+                ArrayOps -> benchShow opts cfg
+                            { title = Just "Array Ops" }
+                            makeArrayOpsGraphs
+                            "charts/array/results.csv"
+                            "charts/array"
+                Concurrent -> benchShow opts cfg
+                            { title = Just "Concurrent Ops" }
+                            makeConcurrentGraphs
+                            "charts/concurrent/results.csv"
+                            "charts/concurrent"
                 Base -> do
                     let cfg' = cfg { title = Just "100,000 elems" }
                     if groupDiff

@@ -150,7 +150,7 @@ import Data.Functor.Identity (Identity)
 import Data.Word (Word8)
 import Foreign.ForeignPtr (withForeignPtr)
 import Foreign.ForeignPtr.Unsafe (unsafeForeignPtrToPtr)
-import Foreign.Ptr (minusPtr, plusPtr, castPtr)
+import Foreign.Ptr (minusPtr, plusPtr)
 import Foreign.Storable (Storable(..))
 import Prelude hiding (length, null, last, map, (!!), read)
 
@@ -161,9 +161,7 @@ import Streamly.Fold.Types (Fold(..))
 
 import qualified Streamly.Fold as FL
 import qualified Streamly.Mem.Array.Types as A
-import qualified Streamly.Prelude as S
 import qualified Streamly.Streams.StreamD as D
-import qualified Streamly.Streams.Prelude as P
 
 -------------------------------------------------------------------------------
 -- Construction
@@ -415,12 +413,6 @@ _toArraysOf n = FL.lchunksOf n (A.toArrayN n) FL.toStream
 -- XXX check if GHC's memory allocator is efficient enough. We can try the C
 -- malloc to compare against.
 
-{-# INLINE bytesToCount #-}
-bytesToCount :: Storable a => a -> Int -> Int
-bytesToCount x n =
-    let elemSize = sizeOf x
-    in n + elemSize - 1 `div` elemSize
-
 {-# INLINE_NORMAL toArrayMinChunk #-}
 toArrayMinChunk :: forall m a. (MonadIO m, Storable a)
     => Int -> Fold m a (Array a)
@@ -452,7 +444,8 @@ toArrayMinChunk elemCount = Fold step initial extract
 -- @since 0.7.0
 {-# INLINE toArray #-}
 toArray :: forall m a. (MonadIO m, Storable a) => Fold m a (Array a)
-toArray = toArrayMinChunk (bytesToCount (undefined :: a) (A.mkChunkSize 1024))
+toArray =
+    toArrayMinChunk (A.bytesToCount (undefined :: a) (A.mkChunkSize 1024))
 
 -- | Convert a stream of arrays into a stream of their elements.
 --
@@ -515,47 +508,7 @@ packArraysChunksOf n xs =
 {-# INLINE arraysOf #-}
 arraysOf :: (IsStream t, MonadIO m, Storable a)
     => Int -> t m a -> t m (Array a)
-arraysOf n str =
-    D.fromStreamD $ A.fromStreamDArraysOf n (D.toStreamD str)
-
--- XXX Both of these implementations of splicing seem to perform equally well.
--- We need to perform benchmarks over a range of sizes though.
-
--- CAUTION! length must more than equal to lengths of all the arrays in the
--- stream.
-{-# INLINE spliceArraysLenUnsafe #-}
-spliceArraysLenUnsafe :: (MonadIO m, Storable a)
-    => Int -> SerialT m (Array a) -> m (Array a)
-spliceArraysLenUnsafe len buffered = do
-    arr <- liftIO $ A.newArray len
-    end <- S.foldlM' writeArr (aEnd arr) buffered
-    return $ arr {aEnd = end}
-
-    where
-
-    writeArr dst Array{..} =
-        liftIO $ withForeignPtr aStart $ \src -> do
-                        let count = aEnd `minusPtr` src
-                        A.memcpy (castPtr dst) (castPtr src) count
-                        return $ dst `plusPtr` count
-
-{-# INLINE _spliceArraysBuffered #-}
-_spliceArraysBuffered :: (MonadIO m, Storable a)
-    => SerialT m (Array a) -> m (Array a)
-_spliceArraysBuffered s = do
-    buffered <- P.foldr S.cons S.nil s
-    len <- S.sum (S.map length buffered)
-    spliceArraysLenUnsafe len s
-
-{-# INLINE spliceArraysRealloced #-}
-spliceArraysRealloced :: forall m a. (MonadIO m, Storable a)
-    => SerialT m (Array a) -> m (Array a)
-spliceArraysRealloced s = do
-    idst <- liftIO $ A.newArray (bytesToCount (undefined :: a)
-                                (A.mkChunkSizeKB 4))
-
-    arr <- S.foldlM' A.spliceWithDoubling idst s
-    liftIO $ A.shrinkToFit arr
+arraysOf n str = D.fromStreamD $ A.fromStreamDArraysOf n (D.toStreamD str)
 
 -- | Given a stream of arrays, splice them all together to generate a single
 -- array. The stream must be /finite/.
@@ -563,8 +516,7 @@ spliceArraysRealloced s = do
 -- @since 0.7.0
 {-# INLINE packArrays #-}
 packArrays :: (MonadIO m, Storable a) => SerialT m (Array a) -> m (Array a)
-packArrays = spliceArraysRealloced
--- spliceArrays = _spliceArraysBuffered
+packArrays = A.spliceArraysBuffered . D.toStreamD
 
 -- | Create an 'Array' from a stream. This is useful when we want to create a
 -- single array from a stream of unknown size. 'writeN' is at least twice
@@ -576,8 +528,8 @@ packArrays = spliceArraysRealloced
 --
 {-# INLINE write #-}
 write :: (MonadIO m, Storable a) => SerialT m a -> m (Array a)
-write = FL.foldl' toArray
--- write m = A.fromStreamD $ D.toStreamD m
+-- write = FL.foldl' toArray
+write m = A.fromStreamD $ D.toStreamD m
 
 -- XXX efficiently compare two streams of arrays. Two streams can have chunks
 -- of different sizes, we can handle that in the stream comparison abstraction.
@@ -595,10 +547,12 @@ write = FL.foldl' toArray
 -- operation.
 --
 -- @since 0.7.0
-{-# INLINE transformWith #-}
+{-# INLINE_NORMAL transformWith #-}
 transformWith :: (MonadIO m, Storable a, Storable b)
     => (SerialT m a -> SerialT m b) -> Array a -> m (Array b)
-transformWith f arr = FL.foldl' (toArrayMinChunk (length arr)) $ f (A.read arr)
+transformWith f arr =
+    -- FL.foldl' (toArrayMinChunk (length arr)) $ f (A.read arr)
+    A.fromStreamD $ D.toStreamD $ f (A.read arr)
 
 -- | Fold an array using a 'Fold'.
 --

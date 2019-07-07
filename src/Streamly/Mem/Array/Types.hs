@@ -27,12 +27,13 @@ module Streamly.Mem.Array.Types
     , newArray
     , unsafeSnoc
     , snoc
-    , spliceWithDoubling
+    , spliceArraysRealloced
+    , spliceArraysBuffered
 
     , fromList
     , fromListN
     , fromStreamDN
-    -- , fromStreamD
+    , fromStreamD
 
     -- * Streams of arrays
     , fromStreamDArraysOf
@@ -71,6 +72,7 @@ module Streamly.Mem.Array.Types
     , shrinkToFit
     , memcpy
     , memcmp
+    , bytesToCount
 
     , unlines
     )
@@ -605,22 +607,63 @@ flattenArraysRev (D.Stream step state) = D.Stream step' (OuterLoop state)
         return $ D.Yield x (InnerLoop st startf
                             (p `plusPtr` negate (sizeOf (undefined :: a))) end)
 
+-- XXX spliceArraysBuffered seems to perform much better when tested on
+-- streaming-benchmarks/array-streamly.  We need to perform benchmarks over a
+-- range of sizes though.
+
+-- CAUTION! length must be more than or equal to lengths of all the arrays in
+-- the stream.
+{-# INLINE_NORMAL spliceArraysLenUnsafe #-}
+spliceArraysLenUnsafe :: (MonadIO m, Storable a)
+    => Int -> D.Stream m (Array a) -> m (Array a)
+spliceArraysLenUnsafe len buffered = do
+    arr <- liftIO $ newArray len
+    end <- D.foldlM' writeArr (aEnd arr) buffered
+    return $ arr {aEnd = end}
+
+    where
+
+    writeArr dst Array{..} =
+        liftIO $ withForeignPtr aStart $ \src -> do
+                        let count = aEnd `minusPtr` src
+                        memcpy (castPtr dst) (castPtr src) count
+                        return $ dst `plusPtr` count
+
 -- CAUTION: a very large number (millions) of arrays can degrade performance
 -- due to GC overhead because we need to buffer the arrays before we flatten
 -- all the arrays.
 --
--- We could take the approach of doubling the memory allocation on each
--- overflow. This would result in more or less the same amount of copying as in
--- the chunking approach. However, if we have to shrink in the end then it may
--- result in an extra copy of the entire data.
---
-{-# INLINE fromStreamD #-}
-fromStreamD :: (MonadIO m, Storable a) => D.Stream m a -> m (Array a)
-fromStreamD m = do
-    let s = fromStreamDArraysOf defaultChunkSize m
+{-# INLINE spliceArraysBuffered #-}
+spliceArraysBuffered :: (MonadIO m, Storable a)
+    => D.Stream m (Array a) -> m (Array a)
+spliceArraysBuffered s = do
     buffered <- D.foldr K.cons K.nil s
     len <- K.foldl' (+) 0 (K.map length buffered)
-    fromStreamDN len $ flattenArrays $ D.fromStreamK buffered
+    -- fromStreamDN len $ flattenArrays $ D.fromStreamK buffered
+    -- spliceArraysLenUnsafe performs slightly better than flattenArrays
+    spliceArraysLenUnsafe len $ D.fromStreamK buffered
+
+{-# INLINE bytesToCount #-}
+bytesToCount :: Storable a => a -> Int -> Int
+bytesToCount x n =
+    let elemSize = sizeOf x
+    in n + elemSize - 1 `div` elemSize
+
+-- This would result in more or less the same amount of copying as in the
+-- chunking and combining in the end approach. However, if we have to shrink in
+-- the end then it may result in an extra copy of the entire data.
+--
+{-# INLINE spliceArraysRealloced #-}
+spliceArraysRealloced :: forall m a. (MonadIO m, Storable a)
+    => D.Stream m (Array a) -> m (Array a)
+spliceArraysRealloced s = do
+    idst <- liftIO $ newArray (bytesToCount (undefined :: a) (mkChunkSizeKB 4))
+    arr <- D.foldlM' spliceWithDoubling idst s
+    liftIO $ shrinkToFit arr
+
+{-# INLINE fromStreamD #-}
+fromStreamD :: (MonadIO m, Storable a) => D.Stream m a -> m (Array a)
+fromStreamD m = spliceArraysBuffered $ fromStreamDArraysOf defaultChunkSize m
 
 -- | Convert an 'Array' into a list.
 --
@@ -855,7 +898,7 @@ spliceWith dst@(Array _ end bound) src  = liftIO $ do
 
 -- Splice a new array into a preallocated array, doubling the space if there is
 -- no space in the target array.
-{-# INLINE spliceWithDoubling #-}
+{-# INLINE_NORMAL spliceWithDoubling #-}
 spliceWithDoubling :: (MonadIO m, Storable a)
     => Array a -> Array a -> m (Array a)
 spliceWithDoubling dst@(Array start end bound) src  = do
