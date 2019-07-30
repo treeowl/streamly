@@ -150,33 +150,33 @@ therefore, the output may differ.
 import qualified Streamly.Prelude as S
 import qualified Streamly.Fold as FL
 import qualified Streamly.Mem.Array as A
-import qualified Streamly.FileSystem.File as File
+import qualified Streamly.FileSystem.Handle as FH
 
 import Data.Char (ord)
 import System.Environment (getArgs)
 import System.IO (openFile, IOMode(..), stdout)
 
-cat src = File.writeArrays stdout $ File.readArraysUpto (256*1024) src
-cp src dst = File.writeArrays dst $ File.readArraysUpto (256*1024) src
+cat src = FH.writeArrays stdout $ FH.readArraysOfUpto (256*1024) src
+cp src dst = FH.writeArrays dst $ FH.readArraysOfUpto (256*1024) src
 wcl src = print =<<
     ( S.length
-    $ FL.splitSuffixBy (== fromIntegral (ord '\n')) FL.drain
-    $ File.read src)
+    $ A.splitArraysOn (ord '\n'))
+    $ FH.readArrays src)
 grepc pat src = print . (subtract 1) =<<
     ( S.length
     $ FL.splitOn (A.fromList (map (fromIntegral . ord) pat)) FL.drain
-    $ File.read src)
+    $ FH.read src)
 avgll src = print =<<
     ( FL.foldl' avg
     $ FL.splitSuffixBy (== fromIntegral (ord '\n')) FL.length
-    $ File.read src)
+    $ FH.read src)
     where avg = (/) <$> toDouble FL.sum <*> toDouble FL.length
           toDouble = fmap (fromIntegral :: Int -> Double)
 llhisto src = print =<< 
     ( FL.foldl' (FL.classify FL.length)
     $ S.map bucket
     $ FL.splitSuffixBy (== fromIntegral (ord '\n')) FL.length
-    $ File.read src)
+    $ FH.read src)
     where
     bucket n = let i = n `div` 10 in if i > 9 then (9,n) else (i,n)
 
