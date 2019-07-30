@@ -80,6 +80,7 @@ example, concat streams concurrently using this.
 * `runStream` has been replaced by `Streamly.Prelude.drain`
 * `runN` has been replaced by `drainN`
 * `runWhile` has been replaced by `drainWhile`
+* `parallely` has been deprecated and renamed to `parallelly`
 
 * `foldWith`, `foldMapWith`, `forEachWith` have been moved from
   "Streamly" module to "Streamly.Prelude" module.
