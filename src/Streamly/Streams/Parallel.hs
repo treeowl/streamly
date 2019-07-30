@@ -21,7 +21,7 @@ module Streamly.Streams.Parallel
     (
       ParallelT
     , Parallel
-    , parallely
+    , parallelly
     , parallel
     , parallelEndByFirst
     , parallelEndByAny
@@ -33,6 +33,9 @@ module Streamly.Streams.Parallel
     , (|&)
     , (|$.)
     , (|&.)
+
+    -- * Deprecated
+    , parallely
     )
 where
 
@@ -465,11 +468,18 @@ newtype ParallelT m a = ParallelT {getParallelT :: Stream m a}
 -- @since 0.2.0
 type Parallel = ParallelT IO
 
--- | Fix the type of a polymorphic stream as 'ParallelT'.
+-- | Same as '`parallelly'.
 --
 -- @since 0.1.0
+{-# DEPRECATED parallely "Please use 'parallelly' instead" #-}
 parallely :: IsStream t => ParallelT m a -> t m a
-parallely = adapt
+parallely = parallelly
+
+-- | Fix the type of a polymorphic stream as 'ParallelT'.
+--
+-- @since 0.7.0
+parallelly :: IsStream t => ParallelT m a -> t m a
+parallelly = adapt
 
 instance IsStream ParallelT where
     toStream = getParallelT

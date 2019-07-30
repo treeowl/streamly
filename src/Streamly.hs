@@ -104,7 +104,7 @@ module Streamly
     , asyncly
     , aheadly
     , wAsyncly
-    , parallely
+    , parallelly
     , zipSerially
     , zipAsyncly
     , adapt
@@ -140,6 +140,7 @@ module Streamly
     , zippingAsync
     , (<=>)
     , (<|)
+    , parallely
 
     -- * Moved
     -- | These APIs have been moved to other modules
