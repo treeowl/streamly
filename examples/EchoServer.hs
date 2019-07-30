@@ -7,5 +7,5 @@ import qualified Streamly.Prelude as S
 
 main :: IO ()
 main = S.drain
-    $ parallely $ S.mapM (flip withSocket (\sk -> writeArrays sk $ readArrays sk))
+    $ parallelly $ S.mapM (flip withSocket (\sk -> writeArrays sk $ readArrays sk))
     $ serially $ connectionsOnAllAddrs 8090

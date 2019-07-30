@@ -168,7 +168,7 @@ zipAsyncWithM f m1 m2 = mkStream $ \st stp sng yld -> do
     foldStream st stp sng yld (K.zipWithM f ma mb)
 
 ------------------------------------------------------------------------------
--- Parallely Zipping Streams
+-- Parallelly Zipping Streams
 ------------------------------------------------------------------------------
 --
 -- | Like 'ZipSerialM' but zips in parallel, it generates all the elements to

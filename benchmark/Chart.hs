@@ -175,7 +175,7 @@ makeNestedGraphs cfg inputFile =
 
     where
 
-    order = ["serially", "asyncly", "wAsyncly", "aheadly", "parallely"]
+    order = ["serially", "asyncly", "wAsyncly", "aheadly", "parallelly"]
 
     classifyNested b
         | "serially/" `isPrefixOf` b =
@@ -186,8 +186,8 @@ makeNestedGraphs cfg inputFile =
             ("wAsyncly",) <$> stripPrefix "wAsyncly/" b
         | "aheadly/" `isPrefixOf` b =
             ("aheadly",) <$> stripPrefix "aheadly/" b
-        | "parallely/" `isPrefixOf` b =
-            ("parallely",) <$> stripPrefix "parallely/" b
+        | "parallelly/" `isPrefixOf` b =
+            ("parallelly",) <$> stripPrefix "parallelly/" b
         | otherwise = Nothing
 
 ------------------------------------------------------------------------------
@@ -207,7 +207,7 @@ makeLinearAsyncGraphs cfg inputFile =
 
     where
 
-    order = ["asyncly", "wAsyncly", "aheadly", "parallely"]
+    order = ["asyncly", "wAsyncly", "aheadly", "parallelly"]
 
     classifyAsync b
         | "asyncly/" `isPrefixOf` b =
@@ -216,8 +216,8 @@ makeLinearAsyncGraphs cfg inputFile =
             ("wAsyncly",) <$> stripPrefix "wAsyncly/" b
         | "aheadly/" `isPrefixOf` b =
             ("aheadly",) <$> stripPrefix "aheadly/" b
-        | "parallely/" `isPrefixOf` b =
-            ("parallely",) <$> stripPrefix "parallely/" b
+        | "parallelly/" `isPrefixOf` b =
+            ("parallelly",) <$> stripPrefix "parallelly/" b
         | otherwise = Nothing
 
 makeLinearRateGraphs :: Config -> String -> IO ()

@@ -10,10 +10,10 @@ import Network.HTTP.Simple
 main :: IO ()
 main = do
     putStrLn "Using parallel stream construction"
-    drain . parallely $ google |: bing |: duckduckgo |: nil
+    drain . parallelly $ google |: bing |: duckduckgo |: nil
 
     putStrLn "\nUsing parallel semigroup composition"
-    drain . parallely $ yieldM google <> yieldM bing <> yieldM duckduckgo
+    drain . parallelly $ yieldM google <> yieldM bing <> yieldM duckduckgo
 
     putStrLn "\nUsing parallel applicative zip"
     drain . zipAsyncly $

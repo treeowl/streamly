@@ -16,7 +16,7 @@ main = do
     where
 
     -- we can just use
-    -- parallely $ cycle1 $ yieldM (...)
+    -- parallelly $ cycle1 $ yieldM (...)
     loop :: String -> Serial (String, Int)
     loop name = do
         S.yieldM $ threadDelay 1000000

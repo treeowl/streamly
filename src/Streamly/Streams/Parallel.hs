@@ -419,7 +419,7 @@ x |&. f = f |$. x
 -- used with unlimited lookahead and zero latency in initiating lookahead.
 --
 -- @
--- main = ('toList' . 'parallely' $ (fromFoldable [1,2]) \<> (fromFoldable [3,4])) >>= print
+-- main = ('toList' . 'parallelly' $ (fromFoldable [1,2]) \<> (fromFoldable [3,4])) >>= print
 -- @
 -- @
 -- [1,3,2,4]
@@ -443,7 +443,7 @@ x |&. f = f |$. x
 -- import qualified "Streamly.Prelude" as S
 -- import Control.Concurrent
 --
--- main = 'drain' . 'parallely' $ do
+-- main = 'drain' . 'parallelly' $ do
 --     n <- return 3 \<\> return 2 \<\> return 1
 --     S.yieldM $ do
 --          threadDelay (n * 1000000)
@@ -462,7 +462,7 @@ x |&. f = f |$. x
 newtype ParallelT m a = ParallelT {getParallelT :: Stream m a}
     deriving (MonadTrans)
 
--- | A parallely composing IO stream of elements of type @a@.
+-- | A parallelly composing IO stream of elements of type @a@.
 -- See 'ParallelT' documentation for more details.
 --
 -- @since 0.2.0

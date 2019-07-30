@@ -34,7 +34,7 @@
 -- performance reasons.
 --
 -- Functions having a 'MonadAsync' constraint work concurrently when used with
--- appropriate stream type combinator. Please be careful to not use 'parallely'
+-- appropriate stream type combinator. Please be careful to not use 'parallelly'
 -- with infinite streams.
 --
 -- Deconstruction and folds accept a 'SerialT' type instead of a polymorphic
@@ -764,7 +764,7 @@ replicate n = fromStreamS . S.replicate n
 -- drain $ asyncly  $ S.take 10 $ S.repeatM $ (threadDelay 1000000 >> print 1)
 -- @
 --
--- /Concurrent, infinite (do not use with 'parallely')/
+-- /Concurrent, infinite (do not use with 'parallelly')/
 --
 -- @since 0.2.0
 repeatM :: (IsStream t, MonadAsync m) => m a -> t m a
@@ -854,7 +854,7 @@ fromListM = fromStreamD . D.fromListM
 -- drain $ asyncly  $ S.fromFoldableM $ replicateM 10 (threadDelay 1000000 >> print 1)
 -- @
 --
--- /Concurrent (do not use with 'parallely' on infinite containers)/
+-- /Concurrent (do not use with 'parallelly' on infinite containers)/
 --
 -- @since 0.3.0
 {-# INLINE fromFoldableM #-}
@@ -1830,7 +1830,7 @@ dropWhileM p m = fromStreamD $ D.dropWhileM p $ toStreamD m
 --           & (asyncly . S.mapM (\\x -> threadDelay 1000000 >> print x))
 -- @
 --
--- /Concurrent (do not use with 'parallely' on infinite streams)/
+-- /Concurrent (do not use with 'parallelly' on infinite streams)/
 --
 -- @since 0.1.0
 {-# INLINE_EARLY mapM #-}
@@ -1861,7 +1861,7 @@ mapMSerial = Serial.mapM
 --           & (asyncly . S.sequence)
 -- @
 --
--- /Concurrent (do not use with 'parallely' on infinite streams)/
+-- /Concurrent (do not use with 'parallelly' on infinite streams)/
 --
 -- @since 0.1.0
 {-# INLINE sequence #-}
@@ -1882,7 +1882,7 @@ mapMaybe f m = fromStreamS $ S.mapMaybe f $ toStreamS m
 
 -- | Like 'mapMaybe' but maps a monadic function.
 --
--- /Concurrent (do not use with 'parallely' on infinite streams)/
+-- /Concurrent (do not use with 'parallelly' on infinite streams)/
 --
 -- @since 0.3.0
 {-# INLINE_EARLY mapMaybeM #-}
@@ -1932,7 +1932,7 @@ reverse' s = fromStreamD $ D.reverse' $ toStreamD s
 -- | Generate a stream by performing a monadic action between consecutive
 -- elements of the given stream.
 --
--- /Concurrent (do not use with 'parallely' on infinite streams)/
+-- /Concurrent (do not use with 'parallelly' on infinite streams)/
 --
 -- @
 -- > S.toList $ S.intersperseM (return ',') $ S.fromList "hello"

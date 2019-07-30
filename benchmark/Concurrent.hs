@@ -48,7 +48,7 @@ appendGroup buflen threads delay =
       bench "ahead"    $ nfIO $ append buflen threads delay aheadly
     , bench "async"    $ nfIO $ append buflen threads delay asyncly
     , bench "wAsync"   $ nfIO $ append buflen threads delay wAsyncly
-    , bench "parallel" $ nfIO $ append buflen threads delay parallely
+    , bench "parallel" $ nfIO $ append buflen threads delay parallelly
     ]
 
 concatGroup :: Int -> Int -> Int -> Int -> [Benchmark]

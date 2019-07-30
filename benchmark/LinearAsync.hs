@@ -86,17 +86,17 @@ main =
         -- , benchSrcIO aheadly "fromFoldable" Ops.sourceFromFoldable
         ]
      -- XXX need to use smaller streams to finish in reasonable time
-      , bgroup "parallely"
-        [ benchSrcIO parallely "unfoldr" Ops.sourceUnfoldr
-        , benchSrcIO parallely "unfoldrM" Ops.sourceUnfoldrM
-        --, benchSrcIO parallely "fromFoldable" Ops.sourceFromFoldable
-        , benchSrcIO parallely "fromFoldableM" Ops.sourceFromFoldableM
-        -- , benchSrcIO parallely "foldMapWith" Ops.sourceFoldMapWith
-        , benchSrcIO parallely "foldMapWithM" Ops.sourceFoldMapWithM
-        , benchSrcIO parallely "foldMapM" Ops.sourceFoldMapM
-        , benchIO "map"  $ Ops.map' parallely 1
-        , benchIO "fmap" $ Ops.fmap' parallely 1
-        , benchIO "mapM" $ Ops.mapM parallely 1
+      , bgroup "parallelly"
+        [ benchSrcIO parallelly "unfoldr" Ops.sourceUnfoldr
+        , benchSrcIO parallelly "unfoldrM" Ops.sourceUnfoldrM
+        --, benchSrcIO parallelly "fromFoldable" Ops.sourceFromFoldable
+        , benchSrcIO parallelly "fromFoldableM" Ops.sourceFromFoldableM
+        -- , benchSrcIO parallelly "foldMapWith" Ops.sourceFoldMapWith
+        , benchSrcIO parallelly "foldMapWithM" Ops.sourceFoldMapWithM
+        , benchSrcIO parallelly "foldMapM" Ops.sourceFoldMapM
+        , benchIO "map"  $ Ops.map' parallelly 1
+        , benchIO "fmap" $ Ops.fmap' parallelly 1
+        , benchIO "mapM" $ Ops.mapM parallelly 1
         -- Zip has only one parallel flavor
         , benchIO "zip" Ops.zipAsync
         , benchIO "zipM" Ops.zipAsyncM

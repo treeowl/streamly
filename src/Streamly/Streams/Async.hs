@@ -650,7 +650,7 @@ consMAsync m r = fromStream $ K.yieldM m `async` (toStream r)
 newtype AsyncT m a = AsyncT {getAsyncT :: Stream m a}
     deriving (MonadTrans)
 
--- | A demand driven left biased parallely composing IO stream of elements of
+-- | A demand driven left biased parallelly composing IO stream of elements of
 -- type @a@.  See 'AsyncT' documentation for more details.
 --
 -- @since 0.2.0
@@ -791,7 +791,7 @@ wAsync = joinStreamVarAsync WAsyncVar
 newtype WAsyncT m a = WAsyncT {getWAsyncT :: Stream m a}
     deriving (MonadTrans)
 
--- | A round robin parallely composing IO stream of elements of type @a@.
+-- | A round robin parallelly composing IO stream of elements of type @a@.
 -- See 'WAsyncT' documentation for more details.
 --
 -- @since 0.2.0

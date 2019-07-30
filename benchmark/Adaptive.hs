@@ -91,42 +91,42 @@ main =
       , bench "aheadly"    $ nfIO $ noDelay aheadly
       , bench "asyncly"    $ nfIO $ noDelay asyncly
       , bench "wAsyncly"   $ nfIO $ noDelay wAsyncly
-      , bench "parallely"  $ nfIO $ noDelay parallely
+      , bench "parallelly"  $ nfIO $ noDelay parallelly
       ]
     , bgroup "constantSlowConsumer"
       [ bench "aheadly"    $ nfIO $ alwaysConstSlow aheadly
       , bench "asyncly"    $ nfIO $ alwaysConstSlow asyncly
       , bench "wAsyncly"   $ nfIO $ alwaysConstSlow wAsyncly
-      , bench "parallely"  $ nfIO $ alwaysConstSlow parallely
+      , bench "parallelly"  $ nfIO $ alwaysConstSlow parallelly
       ]
    ,  bgroup "constantFastConsumer"
       [ bench "aheadly"    $ nfIO $ alwaysConstFast aheadly
       , bench "asyncly"    $ nfIO $ alwaysConstFast asyncly
       , bench "wAsyncly"   $ nfIO $ alwaysConstFast wAsyncly
-      , bench "parallely"  $ nfIO $ alwaysConstFast parallely
+      , bench "parallelly"  $ nfIO $ alwaysConstFast parallelly
       ]
    ,  bgroup "variableSlowConsumer"
       [ bench "aheadly"    $ nfIO $ alwaysVarSlow aheadly
       , bench "asyncly"    $ nfIO $ alwaysVarSlow asyncly
       , bench "wAsyncly"   $ nfIO $ alwaysVarSlow wAsyncly
-      , bench "parallely"  $ nfIO $ alwaysVarSlow parallely
+      , bench "parallelly"  $ nfIO $ alwaysVarSlow parallelly
       ]
    ,  bgroup "variableFastConsumer"
       [ bench "aheadly"    $ nfIO $ alwaysVarFast aheadly
       , bench "asyncly"    $ nfIO $ alwaysVarFast asyncly
       , bench "wAsyncly"   $ nfIO $ alwaysVarFast wAsyncly
-      , bench "parallely"  $ nfIO $ alwaysVarFast parallely
+      , bench "parallelly"  $ nfIO $ alwaysVarFast parallelly
       ]
    ,  bgroup "variableSometimesFastConsumer"
       [ bench "aheadly"    $ nfIO $ runVarSometimesFast aheadly
       , bench "asyncly"    $ nfIO $ runVarSometimesFast asyncly
       , bench "wAsyncly"   $ nfIO $ runVarSometimesFast wAsyncly
-      , bench "parallely"  $ nfIO $ runVarSometimesFast parallely
+      , bench "parallelly"  $ nfIO $ runVarSometimesFast parallelly
       ]
    ,  bgroup "variableFullOverlap"
       [ bench "aheadly"    $ nfIO $ randomVar aheadly
       , bench "asyncly"    $ nfIO $ randomVar asyncly
       , bench "wAsyncly"   $ nfIO $ randomVar wAsyncly
-      , bench "parallely"  $ nfIO $ randomVar parallely
+      , bench "parallelly"  $ nfIO $ randomVar parallelly
       ]
    ]

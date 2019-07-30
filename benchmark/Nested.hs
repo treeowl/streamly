@@ -82,15 +82,15 @@ main =
       , benchIO "breakAfterSome" $ Ops.breakAfterSome wAsyncly
       ]
 
-    , bgroup "parallely"
-      [ benchIO "toNullAp"       $ Ops.toNullAp       parallely
-      , benchIO "toNull"         $ Ops.toNull         parallely
-      , benchIO "toNull3"        $ Ops.toNull3        parallely
-      , benchIO "toList"         $ Ops.toList         parallely
-      --, benchIO "toListSome"     $ Ops.toListSome     parallely
-      , benchIO "filterAllOut"   $ Ops.filterAllOut   parallely
-      , benchIO "filterAllIn"    $ Ops.filterAllIn    parallely
-      , benchIO "filterSome"     $ Ops.filterSome     parallely
-      , benchIO "breakAfterSome" $ Ops.breakAfterSome parallely
+    , bgroup "parallelly"
+      [ benchIO "toNullAp"       $ Ops.toNullAp       parallelly
+      , benchIO "toNull"         $ Ops.toNull         parallelly
+      , benchIO "toNull3"        $ Ops.toNull3        parallelly
+      , benchIO "toList"         $ Ops.toList         parallelly
+      --, benchIO "toListSome"     $ Ops.toListSome     parallelly
+      , benchIO "filterAllOut"   $ Ops.filterAllOut   parallelly
+      , benchIO "filterAllIn"    $ Ops.filterAllIn    parallelly
+      , benchIO "filterSome"     $ Ops.filterSome     parallelly
+      , benchIO "breakAfterSome" $ Ops.breakAfterSome parallelly
       ]
     ]

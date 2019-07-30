@@ -227,7 +227,7 @@ application (`&`) operator is enough.  Combinators are provided in
 Monadic construction and generation functions e.g. `consM`, `unfoldrM`,
 `replicateM`, `repeatM`, `iterateM` and `fromFoldableM` etc. work concurrently
 when used with appropriate stream type combinator (e.g. `asyncly`, `aheadly` or
-`parallely`).
+`parallelly`).
 
 The following code finishes in 3 seconds (6 seconds when serial):
 
@@ -236,7 +236,7 @@ The following code finishes in 3 seconds (6 seconds when serial):
 > S.toList $ aheadly $ p 3 |: p 2 |: p 1 |: S.nil
 [3,2,1]
 
-> S.toList $ parallely $ p 3 |: p 2 |: p 1 |: S.nil
+> S.toList $ parallelly $ p 3 |: p 2 |: p 1 |: S.nil
 [1,2,3]
 ```
 
@@ -280,7 +280,7 @@ import Streamly
 import qualified Streamly.Prelude as S
 import Control.Concurrent (threadDelay)
 
-main = S.toList $ parallely $ foldMap delay [1..10]
+main = S.toList $ parallelly $ foldMap delay [1..10]
  where delay n = S.yieldM $ threadDelay (n * 1000000) >> print n
 ```
 
@@ -312,7 +312,7 @@ ThreadId 36: Delay 1
 ### Parallel
 
 ``` haskell
-main = S.drain . parallely $ delay 3 <> delay 2 <> delay 1
+main = S.drain . parallelly $ delay 3 <> delay 2 <> delay 1
 ```
 ```
 ThreadId 42: Delay 1
@@ -372,7 +372,7 @@ infinite streams. The following combinator provides strict, unbounded
 concurrency irrespective of demand:
 
 ``` haskell
-main = S.drain $ parallely $ loops
+main = S.drain $ parallelly $ loops
 ```
 
 To run it serially but interleaving the outer and inner loop iterations

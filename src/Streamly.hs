@@ -295,10 +295,10 @@ runStream = P.drain
 runInterleavedT :: Monad m => WSerialT m a -> m ()
 runInterleavedT = P.drain . K.adapt
 
--- | Same as @runStream . parallely@.
+-- | Same as @runStream . parallelly@.
 --
 -- @since 0.1.0
-{-# DEPRECATED runParallelT "Please use 'runStream . parallely' instead." #-}
+{-# DEPRECATED runParallelT "Please use 'runStream . parallelly' instead." #-}
 runParallelT :: Monad m => ParallelT m a -> m ()
 runParallelT = P.drain . K.adapt
 

@@ -258,7 +258,7 @@ import Control.Monad.Trans.Class   (MonadTrans (lift))
 -- combinators or type annotations, without any cost, to achieve the desired
 -- composition style.  To force a particular type of composition, we coerce the
 -- stream type using the corresponding type adapting combinator from
--- 'serially', 'aheadly', 'asyncly', or 'parallely'.  The default stream type
+-- 'serially', 'aheadly', 'asyncly', or 'parallelly'.  The default stream type
 -- is inferred as 'Serial' unless you change it by using one of the combinators
 -- or by using a type annotation.
 
@@ -308,7 +308,7 @@ import Control.Monad.Trans.Class   (MonadTrans (lift))
 -- concurrent. Please be aware that all concurrency capable APIs that you may
 -- have used under the scope of a concurrent stream combinator will become
 -- concurrent. For example if you have a 'repeatM' somewhere in your program
--- and you use 'parallely' on top, the 'repeatM' becomes fully parallel,
+-- and you use 'parallelly' on top, the 'repeatM' becomes fully parallel,
 -- resulting into an infinite parallel execution . Instead, use the
 -- /Keep It Serial and Stupid/ principle, start with the default serial
 -- composition and enable concurrent combinators only when and where necessary.
@@ -410,7 +410,7 @@ import Control.Monad.Trans.Class   (MonadTrans (lift))
 --
 -- @
 -- > let p n = threadDelay (n * 1000000) >> return n
--- > S.'toList' $ 'parallely' $ p 3 |: p 2 |: p 1 |: S.'nil'
+-- > S.'toList' $ 'parallelly' $ p 3 |: p 2 |: p 1 |: S.'nil'
 -- [1,2,3]
 -- > S.'toList' $ 'aheadly' $ p 3 |: p 2 |: p 1 |: S.'nil'
 -- [3,2,1]
@@ -852,7 +852,7 @@ import Control.Monad.Trans.Class   (MonadTrans (lift))
 --
 -- The 'Semigroup' operation '<>' of the 'Parallel' type combines the two
 -- streams in a fairly concurrent manner with round robin scheduling. We use
--- the 'parallely' type combinator to effect 'Parallel' style of composition.
+-- the 'parallelly' type combinator to effect 'Parallel' style of composition.
 -- We can also use the 'Parallel' type annotation for the stream type to
 -- achieve the same effect.
 --
@@ -873,7 +873,7 @@ import Control.Monad.Trans.Class   (MonadTrans (lift))
 -- import qualified Streamly.Prelude as S
 -- import Network.HTTP.Simple
 --
--- main = 'drain' . 'parallely' $ google \<> bing \<> duckduckgo
+-- main = 'drain' . 'parallelly' $ google \<> bing \<> duckduckgo
 --     where
 --         google     = get "https://www.google.com/search?q=haskell"
 --         bing       = get "https://www.bing.com/search?q=haskell"
@@ -884,7 +884,7 @@ import Control.Monad.Trans.Class   (MonadTrans (lift))
 -- The polymorphic version of the binary operation '<>' of the 'Parallel' type
 -- is 'parallel'. We can use 'parallel' to join streams in a fairly concurrent
 -- manner irrespective of the type, notice that we have not used the
--- 'parallely' combinator in the following example:
+-- 'parallelly' combinator in the following example:
 --
 -- @
 -- main = 'drain' $ delay 3 \`parallel` delay 2 \`wAsync` delay 1
@@ -1188,7 +1188,7 @@ import Control.Monad.Trans.Class   (MonadTrans (lift))
 -- iterations of a loop concurrently. The difference is in the nested loop
 -- behavior. The streams at each nest level is run fully concurrently
 -- irrespective of the demand.  The loop nesting works exactly the same way as
--- the merging of streams 'parallely' works.  The 'parallely' type combinator
+-- the merging of streams 'parallelly' works.  The 'parallelly' type combinator
 -- can be used to switch to this style of composition. Alternatively, a type
 -- annotation can be used to specify the type of the stream as 'Parallel'.
 --
@@ -1196,7 +1196,7 @@ import Control.Monad.Trans.Class   (MonadTrans (lift))
 -- import "Streamly"
 -- import qualified "Streamly.Prelude" as S
 --
--- main = 'drain' . 'parallely' $ do
+-- main = 'drain' . 'parallelly' $ do
 --     x <- S.'fromFoldable' [3,2,1]
 --     delay x
 -- @
@@ -1238,7 +1238,7 @@ import Control.Monad.Trans.Class   (MonadTrans (lift))
 -- main = 'drain' . 'wSerially' $ composed
 -- main = 'drain' . 'asyncly'   $ composed
 -- main = 'drain' . 'wAsyncly'  $ composed
--- main = 'drain' . 'parallely' $ composed
+-- main = 'drain' . 'parallelly' $ composed
 -- @
 --
 --  As an exercise try to figure out the output of this code for each mode of

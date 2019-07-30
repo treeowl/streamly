@@ -14,7 +14,7 @@ used where you would use `async`.
 Unlike `async`, streamly does not use a spawn and `wait` model.  Streamly uses
 a more high level approach to concurrency and has no explicit notion of
 threads. In streamly, we compose multiple actions as a stream and then express
-whether you want to run the actions in the stream `serially` or `parallely`.
+whether you want to run the actions in the stream `serially` or `parallelly`.
 There are many different ways in which you can run streams concurrently, see
 the reference documentation for details.
 
@@ -69,7 +69,7 @@ You can run any number of actions concurrently. For example, to fetch two URLs
 concurrently:
 
 ```haskell
-  urls <- S.toList $ parallely $ getURL 2 |: getURL 1 |: S.nil
+  urls <- S.toList $ parallelly $ getURL 2 |: getURL 1 |: S.nil
 ```
 
 This would return the results in their arrival order i.e. first 1 and then 2.
@@ -87,7 +87,7 @@ return 2 first and then 1.
 Use `drain` instead of `toList` to run the actions but ignore the results:
 
 ```haskell
-  S.drain $ parallely $ getURL 1 |: getURL 2 |: S.nil
+  S.drain $ parallelly $ getURL 1 |: getURL 2 |: S.nil
 ```
 
 ### Concurrent Applicative
@@ -112,14 +112,14 @@ We can run multiple actions concurrently and take the first result that
 arrives:
 
 ```haskell
-  urls <- S.toList $ S.take 1 $ parallely $ getURL 1 |: getURL 2 |: S.nil
+  urls <- S.toList $ S.take 1 $ parallelly $ getURL 1 |: getURL 2 |: S.nil
 ```
 
 After the first result arrives, the rest of the actions are canceled
 automatically.  In general, we can take first `n` results as they arrive:
 
 ```haskell
-  urls <- S.toList $ S.take 2 $ parallely $ getURL 1 |: getURL 2 |: S.nil
+  urls <- S.toList $ S.take 2 $ parallelly $ getURL 1 |: getURL 2 |: S.nil
 ```
 
 #### `race` Using Exceptions
@@ -135,7 +135,7 @@ other actions will be canceled, for example:
   instance Exception Result
 
   main = do
-      url <- try $ S.drain $ parallely $
+      url <- try $ S.drain $ parallelly $
                    (getURL 2 >>= throwM . Result)
                 |: (getURL 1 >>= throwM . Result)
                 |: S.nil
@@ -178,7 +178,7 @@ Streamly has not just the equivalent of `replicateConcurrently` which is
 module documentation for more details.
 
 ```haskell
-  xs <- S.toList $ parallely $ S.replicateM 2 $ getURL 1
+  xs <- S.toList $ parallelly $ S.replicateM 2 $ getURL 1
 ```
 
 ### Functor
@@ -189,13 +189,13 @@ concurrently.
 To map serially just use `fmap`:
 
 ```haskell
-  xs <- S.toList $ parallely $ fmap (+1) $ return 1 |: return 2 |: S.nil
+  xs <- S.toList $ parallelly $ fmap (+1) $ return 1 |: return 2 |: S.nil
 ```
 
 To map a monadic action concurrently on all elements of the stream use `mapM`:
 
 ```haskell
-  xs <- S.toList $ parallely $ S.mapM (\x -> return (x + 1))
+  xs <- S.toList $ parallelly $ S.mapM (\x -> return (x + 1))
                            $ return 1 |: return 2 |: S.nil
 ```
 

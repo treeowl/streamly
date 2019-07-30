@@ -16,7 +16,7 @@ main = drain $ do
     where
 
     -- we can just use
-    -- parallely $ mconcat $ replicate n $ yieldM (...)
+    -- parallelly $ mconcat $ replicate n $ yieldM (...)
     loop :: String -> Int -> SerialT IO String
     loop name n = do
         rnd <- yieldM (randomIO :: IO Int)

@@ -148,7 +148,7 @@ class IsStream t where
     -- ["hello","world"]
     -- @
     --
-    -- /Concurrent (do not use 'parallely' to construct infinite streams)/
+    -- /Concurrent (do not use 'parallelly' to construct infinite streams)/
     --
     -- @since 0.2.0
     consM :: MonadAsync m => m a -> t m a -> t m a
@@ -165,10 +165,10 @@ class IsStream t where
     -- @
     -- let delay = threadDelay 1000000 >> print 1
     -- drain $ serially  $ delay |: delay |: delay |: nil
-    -- drain $ parallely $ delay |: delay |: delay |: nil
+    -- drain $ parallelly $ delay |: delay |: delay |: nil
     -- @
     --
-    -- /Concurrent (do not use 'parallely' to construct infinite streams)/
+    -- /Concurrent (do not use 'parallelly' to construct infinite streams)/
     --
     -- @since 0.2.0
     (|:) :: MonadAsync m => m a -> t m a -> t m a
