@@ -3,6 +3,8 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 #include "inline.hs"
 
@@ -149,12 +151,13 @@ import qualified Streamly.Streams.StreamD.Type as D
 -- Array IO (Input)
 -------------------------------------------------------------------------------
 
--- | Read a 'ByteArray' from a file handle. If no data is available on the
+-- | Reads data into an 'Array' from a file handle. If no data is available on the
 -- handle it blocks until some data becomes available. If data is available
 -- then it immediately returns that data without blocking. It reads a maximum
--- of up to the size requested.
+-- of up to the size requested. The caller must ensure that the size given is a
+-- multiple of sizeOf a.
 {-# INLINABLE readArrayUpto #-}
-readArrayUpto :: Int -> Handle -> IO (Array Word8)
+readArrayUpto :: Storable a => Int -> Handle -> IO (Array a)
 readArrayUpto size h = do
     ptr <- mallocPlainForeignPtrBytes size
     -- ptr <- mallocPlainForeignPtrAlignedBytes size (alignment (undefined :: Word8))
@@ -188,17 +191,21 @@ _readArraysOf size h = go
         else yld arr go
 
 -- | @readArraysOf size handle@ reads a stream of arrays from the file
--- handle @handle@.  The maximum size of a single array is limited to @size@.
--- The actual size read may be less than or equal to @size@.
+-- handle @handle@.  The maximum length of a single array is limited to @len@.
+-- The actual number of elements read may be less than or equal to @len@.
 --
 -- @since 0.7.0
 {-# INLINE_NORMAL readArraysOf #-}
-readArraysOf :: (IsStream t, MonadIO m) => Int -> Handle -> t m (Array Word8)
-readArraysOf size h = D.fromStreamD (D.Stream step ())
+readArraysOf ::
+       forall t m a. (IsStream t, MonadIO m, Storable a)
+    => Int
+    -> Handle
+    -> t m (Array a)
+readArraysOf len h = D.fromStreamD (D.Stream step ())
   where
     {-# INLINE_LATE step #-}
     step _ _ = do
-        arr <- liftIO $ readArrayUpto size h
+        arr <- liftIO $ readArrayUpto (len * sizeOf (undefined :: a)) h
         return $
             case A.length arr of
                 0 -> D.Stop
@@ -215,8 +222,9 @@ readArraysOf size h = D.fromStreamD (D.Stream step ())
 --
 -- @since 0.7.0
 {-# INLINE readArrays #-}
-readArrays :: (IsStream t, MonadIO m) => Handle -> t m (Array Word8)
-readArrays = readArraysOf defaultChunkSize
+readArrays :: forall t m a . (IsStream t, MonadIO m, Storable a) => Handle -> t m (Array a)
+readArrays = readArraysOf (max 1 $ defaultChunkSize `div` sizeOf (undefined :: a))
+                          -- max 1; in the unlikely case that sizeOf > defaultChunkSize
 
 -------------------------------------------------------------------------------
 -- Read File to Stream
@@ -226,24 +234,24 @@ readArrays = readArraysOf defaultChunkSize
 -- read requests at the same time. For serial case we can use async IO. We can
 -- also control the read throughput in mbps or IOPS.
 
--- | @readInChunksOf chunkSize handle@ reads a byte stream from a file
+-- | @readInChunksOf chunkSize handle@ reads a stream of elements @a@ from a file
 -- handle, reads are performed in chunks of up to @chunkSize@.
 --
 -- @since 0.7.0
 {-# INLINE readInChunksOf #-}
-readInChunksOf :: (IsStream t, MonadIO m) => Int -> Handle -> t m Word8
+readInChunksOf :: (IsStream t, MonadIO m, Storable a) => Int -> Handle -> t m a
 readInChunksOf chunkSize h = AS.flatten $ readArraysOf chunkSize h
 
 -- TODO
 -- Generate a stream of elements of the given type from a file 'Handle'.
 -- read :: (IsStream t, MonadIO m, Storable a) => Handle -> t m a
 --
--- > read = 'readByChunks' A.defaultChunkSize
+-- > read = 'readInChunksOf' A.defaultChunkSize
 -- | Generate a byte stream from a file 'Handle'.
 --
 -- @since 0.7.0
 {-# INLINE read #-}
-read :: (IsStream t, MonadIO m) => Handle -> t m Word8
+read :: (IsStream t, MonadIO m, Storable a) => Handle -> t m a
 read = AS.flatten . readArrays
 
 -------------------------------------------------------------------------------
@@ -283,7 +291,7 @@ writeArraysInChunksOf n h = lpackArraysChunksOf n (writeArrays h)
 --
 -- @since 0.7.0
 {-# INLINE writeInChunksOf #-}
-writeInChunksOf :: MonadIO m => Int -> Handle -> Fold m Word8 ()
+writeInChunksOf :: (MonadIO m, Storable a) => Int -> Handle -> Fold m a ()
 writeInChunksOf n h = FL.lchunksOf n (A.writeN n) (writeArrays h)
 
 -- > write = 'writeInChunksOf' A.defaultChunkSize
@@ -293,8 +301,8 @@ writeInChunksOf n h = FL.lchunksOf n (A.writeN n) (writeArrays h)
 --
 -- @since 0.7.0
 {-# INLINE write #-}
-write :: MonadIO m => Handle -> Fold m Word8 ()
-write = writeInChunksOf defaultChunkSize
+write :: forall m a . (MonadIO m, Storable a) => Handle -> Fold m a ()
+write = writeInChunksOf (max 1 $ defaultChunkSize `div` sizeOf (undefined :: a))
 
 {-
 {-# INLINE write #-}
